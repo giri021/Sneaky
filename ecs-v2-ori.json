@@ -1,0 +1,24 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "sneaky",
+      "image": "giri021/sneaky:latest",
+      "cpu": 0,
+      "memory": 256,
+      "portMappings": [
+        {
+          "containerPort": 80
+        }
+      ],
+      "dockerLabels" : {
+        "container" : "sneaky",
+        "environment" : "development"
+      },
+      "logConfiguration" : {
+        "logDriver": "json-file",
+        "options": {
+          "labels" : "container,environment"
+        }
+      }
+    }]
+}
