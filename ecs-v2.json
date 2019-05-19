@@ -1,8 +1,8 @@
 {
   "containerDefinitions": [
     {
-      "name": "sneaky",
-      "image": "giri021/sneaky:latest",
+      "name": "giri-alpha-sneaky",
+      "image": "081602682094.dkr.ecr.us-east-2.amazonaws.com/giri-alpha-sneaky:1.0.0.BUILD_NUMBER",
       "cpu": 0,
       "memory": 256,
       "portMappings": [
@@ -11,7 +11,7 @@
         }
       ],
       "dockerLabels" : {
-        "container" : "sneaky",
+        "container" : "giri-alpha-sneaky",
         "environment" : "development"
       },
       "logConfiguration" : {
