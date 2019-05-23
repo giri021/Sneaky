@@ -1,7 +1,7 @@
 {
   "containerDefinitions": [
     {
-      "name": "sneaky-alpha-giri",
+      "name": "dev-sneaky-alpha-giri",
       "image": "081602682094.dkr.ecr.us-east-2.amazonaws.com/sneaky-alpha-giri:latest",
       "cpu": 0,
       "memory": 128,
@@ -11,8 +11,8 @@
         }
       ],
       "dockerLabels" : {
-        "container" : "sneaky-alpha-giri",
-        "environment" : "development"
+        "container" : "dev-sneaky-alpha-giri",
+        "environment" : "staging"
       },
       "logConfiguration" : {
         "logDriver": "json-file",
