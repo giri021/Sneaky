@@ -1,0 +1,117 @@
+version: '3.4'
+
+volumes:
+  static-data:
+    driver: local
+    name: design_infor_com_static_data
+  media-data:
+    driver: local
+    name: design_infor_com_media_data
+  postgres-data:
+    driver: local
+    name: design_infor_com_postgres_data
+  elasticsearch-data:
+    name: design_infor_com_elasticsearch_data
+    driver: local
+
+services:
+  postgres:
+    image: postgres:10.4
+    container_name: 'docssite_postgres'
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: 'postgres'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    container_name: 'docssite_elasticsearch'
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.ml.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+
+  kibana:
+    image: kibana:6.4.2
+    container_name: 'docssite_kibana'
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
+
+  backend:
+    build: ./docker/docs-backend
+    image: hookandloop/docs-backend:1.0.9
+    container_name: 'docssite_backend'
+    depends_on:
+      - postgres
+      - elasticsearch
+    links:
+      - postgres
+      - elasticsearch
+    volumes:
+      - ./src/app:/home/app
+
+      - ./src/config:/home/config
+      - ./src/config/supervisor/backend.conf:/etc/supervisor/conf.d/backend.conf
+      - ./src/config/elasticsearch/searchguard:/elasticsearch/config/searchguard
+
+      - static-data:/home/app/static/
+      - media-data:/home/app/media/
+    ports:
+      - "9003"
+      - "9002:9002"
+    environment:
+      DOCS_API_KEY: ${DOCS_API_KEY}
+      S3_STORAGE: ${S3_STORAGE}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+      AWS_QUERYSTRING_AUTH: ${AWS_QUERYSTRING_AUTH}
+
+      ES_HOST: ${ES_HOST}
+      ES_INDEX_PREFIX: ${ES_INDEX_PREFIX}
+      ES_PORT: ${ES_PORT}
+      ES_SECURE: ${ES_SECURE}
+
+      ES_USER: elastic
+      ES_PASS: ${ES_PASS}
+
+  nginx:
+    build: ./docker/docs-nginx
+    image: hookandloop/docs-nginx:1.0.1
+    container_name: 'docssite_nginx'
+    depends_on:
+      - backend
+    links:
+      - backend
+    volumes:
+      - ./src/web:/home/web
+
+      - ./src/config:/home/config
+      - ./src/config/supervisor/webserver.conf:/etc/supervisor/conf.d/webserver.conf
+      - ./src/config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./src/config/nginx/localhost.conf:/etc/nginx/sites-available/default
+      - ./src/config/nginx/snippets:/etc/nginx/snippets
+
+      - static-data:/home/app/static/
+      - media-data:/home/app/media/
+    ports:
+      - "80:80"
